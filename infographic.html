@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        text.title {
+            font-family: "Arial Black", sans-serif; /* Specify a nicer font */
+            font-size: 36px; /* Increase the font size */
+        }
+        body {
+            background-color: #8ee0f7; /* Light gray background for the page */
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .county {
+            stroke: #fff;
+        }
+        #tooltip {
+            position: absolute;
+            visibility: hidden;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid black;
+        }
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <svg width="1500" height="800"></svg>
+    <div id="tooltip"></div>
+    <script>
+        d3.json("merged_county_data.geojson").then(function(data) {
+            const svg = d3.select("svg");
+            const width = +svg.attr("width");
+            const height = +svg.attr("height");
+    
+            // Create groups for map and static elements
+            const gMap = svg.append("g"); // Group for map that will be zoomable
+            const gStatic = svg.append("g"); // Group for static elements like title and legend
+    
+            // Setup projection and path
+            const projection = d3.geoAlbersUsa().scale(1300).translate([width / 2, height / 2]);
+            const path = d3.geoPath().projection(projection);
+    
+            // Setup zoom
+            const zoom = d3.zoom()
+                .scaleExtent([1, 8])
+                .on("zoom", function(event) {
+                    gMap.attr('transform', event.transform);
+                });
+            gMap.call(zoom); // Apply zoom to the map group only
+    
+            // Add title to static group
+            gStatic.append("text")
+                .attr("class", "title") // Assign the class for styling
+                .attr("x", width / 2)
+                .attr("y", "50")
+                .attr("text-anchor", "middle")
+                .text("Quality of Life Map");
+    
+            // Color scale and legend in static group
+            const colorScale = d3.scaleSequential(d3.interpolateBlues)
+                .domain([0, d3.max(data.features, d => d.properties.index || 0)]);
+
+            // Define a vertical linear gradient
+            gStatic.append("defs").append("linearGradient")
+                .attr("id", "gradient")
+                .attr("x1", "0%")
+                .attr("y1", "100%") // Start from the bottom
+                .attr("x2", "0%")
+                .attr("y2", "0%") // Go to the top
+                .selectAll("stop")
+                .data(d3.range(0, 1.01, 0.1)) // Generate stops from 0 to 1
+                .enter().append("stop")
+                .attr("offset", d => d * 100 + "%")
+                .attr("stop-color", colorScale); // Use the color scale for stop colors
+
+                gStatic.append("rect")
+                    .attr("width", 20)
+                    .attr("height", 300)
+                    .style("fill", "url(#gradient)")
+                    .attr("transform", "translate(10,30)"); // Adjust position as needed
+
+                // Add labels for the scale
+                gStatic.append("text")
+                    .attr("transform", "translate(35,25)") // Position at the top of the legend
+                    .text("High Quality of Life Cost-Income Index"); // High value
+
+                gStatic.append("text")
+                    .attr("transform", "translate(35,330)") // Position at the bottom of the legend
+                    .text("Low Quality of Life Cost-Income Index"); // Low value
+            // Draw each county in map group
+            gMap.selectAll(".county")
+                .data(data.features)
+                .enter()
+                .append("path")
+                .attr("class", "county")
+                .attr("d", path)
+                .attr("fill", d => d.properties.index ? colorScale(d.properties.index) : "#f4faff")
+                .on("mouseover", function(event, d) {
+                    d3.select("#tooltip").style("visibility", "visible")
+                        .html(`County: ${d.properties.NAME || "Unknown"}<br>Quality of Life Cost-Income Index: ${d.properties.index ? parseFloat(d.properties.index).toFixed(2) : "N/A"}`)
+                        .style("top", (event.pageY - 10) + "px")
+                        .style("left", (event.pageX + 10) + "px");
+                })
+                .on("mousemove", function(event) {
+                    d3.select("#tooltip").style("top", (event.pageY - 10) + "px")
+                        .style("left", (event.pageX + 10) + "px");
+                })
+                .on("mouseout", function() {
+                    d3.select("#tooltip").style("visibility", "hidden");
+                });
+        });
+    </script>
+        
+</body>
+</html>
