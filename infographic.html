@@ -83,20 +83,39 @@
                 .attr("offset", d => d * 100 + "%")
                 .attr("stop-color", colorScale); // Use the color scale for stop colors
 
-                gStatic.append("rect")
-                    .attr("width", 20)
-                    .attr("height", 300)
-                    .style("fill", "url(#gradient)")
-                    .attr("transform", "translate(10,30)"); // Adjust position as needed
+            gStatic.append("rect")
+                .attr("width", 20)
+                .attr("height", 300)
+                .style("fill", "url(#gradient)")
+                .attr("transform", "translate(10,30)"); // Adjust position as needed
 
-                // Add labels for the scale
-                gStatic.append("text")
-                    .attr("transform", "translate(35,25)") // Position at the top of the legend
-                    .text("High Quality of Life Cost-Income Index"); // High value
+            // Add labels for the scale
+            gStatic.append("text")
+                .attr("transform", "translate(38,45)") // Position at the top of the legend
+                .text("High Quality of Life Cost-Income Index"); // High value
+            
+            // Add the caption below the legend
+            gStatic.append("text")
+                .attr("transform", "translate(25, 140)") // Adjusted position below the legend
+                .selectAll("tspan")
+                .data([
+                    "The index is calculated by taking",
+                    " the ratio of the median family ",
+                    "income to the total cost for each",
+                    "county and then normalizing this ",
+                    "ratio to a range between 0 and 1."
+                ])
+                .enter()
+                .append("tspan")
+                .attr("x", 35)
+                .attr("dy", (d, i) => i === 0 ? "0em" : "1.2em") // Adjust dy value for each line
+                .text(d => d);
 
-                gStatic.append("text")
-                    .attr("transform", "translate(35,330)") // Position at the bottom of the legend
-                    .text("Low Quality of Life Cost-Income Index"); // Low value
+
+            gStatic.append("text")
+                .attr("transform", "translate(38,325)") // Position at the bottom of the legend
+                .text("Low Quality of Life Cost-Income Index"); // Low value
+
             // Draw each county in map group
             gMap.selectAll(".county")
                 .data(data.features)
